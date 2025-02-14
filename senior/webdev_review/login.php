@@ -1,0 +1,95 @@
+<?php
+    // Enable displaying of errors for easier debugging
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+
+    // Include the database connection file
+    include "db_connection.php";
+
+    // Check if the login form was submitted
+    if(isset($_POST['submit'])){
+
+        // Get email and password from POST data
+        $email = $_POST['email'];
+        $password = $_POST['password'];
+        
+        // Hash the password for security (assuming MD5 is sufficient for your use case)
+        $password = hash('md5',$password);
+        
+        // Initialize an error message variable
+        $error_msg = "";
+
+        // Establish a database connection
+        $db = db_connect();
+        // Prepare a SQL query to check user credentials
+        $query = $db->prepare("SELECT * FROM users WHERE email = '$email' AND password = '$password'");
+        // Execute the query
+        $query->execute();
+
+        // Check if any rows were found (valid login)
+        $row_count = $query->rowCount();//Row count
+        if($row_count > 0){
+
+          // Fetch the user data
+          $row = $query->fetch(PDO::FETCH_ASSOC);
+
+          // Start a session and store user ID
+          // This allow keeping the user login after visiting another web pages
+          session_start();
+          $_SESSION['id'] = $row['id'];
+
+          // Redirect to profile page on successful login
+          header('Location:profile.php');
+        }else{
+          // Set error message for invalid credentials
+          $error_msg = "Invalid username or password";
+        }
+        
+
+    }
+
+
+?>
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>EH | Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  </head>
+  <body>
+
+    <div class="container">
+        <div class='row'>
+            <div class="col-4 offset-md-4" style='margin-top:100px'>
+
+                <h1>Login</h1>
+
+                <form method="post" action="login.php">
+                    <div class="form-group">
+                        <label for="exampleInputEmail1">Email address</label>
+                        <input type="text" class="form-control" name="email" aria-describedby="emailHelp" placeholder="Enter email">
+                        <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleInputPassword1">Password</label>
+                        <input type="password" class="form-control" name="password" placeholder="Password">
+                    </div>
+                    <button type="submit" name="submit" class="btn btn-primary">Submit</button>
+                    </form>
+
+                    <div style='color:red;margin-top:20px;'>
+                        <?php 
+                            if(isset($error_msg))
+                                echo $error_msg; 
+                        ?>
+                    </div>
+            </div>
+        </div>
+     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  </body>
+</html>
